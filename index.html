@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>AkayGPT</title>
+  <style>
+    body { font-family: Arial; background:#0f172a; color:#fff; padding:20px }
+    #chat { max-width:600px; margin:auto }
+    textarea, button {
+      width:100%; padding:10px; margin-top:10px;
+      border-radius:8px; border:none;
+    }
+    button { background:#22c55e; font-weight:bold }
+    .msg { margin:10px 0 }
+    .user { color:#38bdf8 }
+    .bot { color:#a7f3d0 }
+  </style>
+</head>
+<body>
+
+<div id="chat">
+  <h2>🤖 AkayGPT</h2>
+  <div id="messages"></div>
+
+  <textarea id="input" rows="3" placeholder="Bir şey sor..."></textarea>
+  <button onclick="send()">Gönder</button>
+</div>
+
+<script>
+const API_KEY = "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";
+const API_URL = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta";
+
+async function send() {
+  const input = document.getElementById("input");
+  const msg = input.value;
+  if (!msg) return;
+
+  addMsg("Sen", msg, "user");
+  input.value = "";
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer " + API_KEY,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ inputs: msg })
+  });
+
+  const data = await res.json();
+  const reply = data[0]?.generated_text || "Cevap alınamadı";
+  addMsg("AkayGPT", reply, "bot");
+}
+
+function addMsg(who, text, cls) {
+  const div = document.createElement("div");
+  div.className = "msg " + cls;
+  div.innerText = who + ": " + text;
+  document.getElementById("messages").appendChild(div);
+}
+</script>
+
+</body>
+</html>
