@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>AkayGPT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  margin:0;
+  background:#0b1220;
+  color:#e5e7eb;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont;
+}
+header{
+  padding:14px;
+  text-align:center;
+  font-weight:600;
+  background:#020617;
+  border-bottom:1px solid #1e293b;
+}
+#chat{
+  max-width:800px;
+  margin:auto;
+  padding:12px;
+}
+.message{
+  max-width:80%;
+  padding:10px 14px;
+  margin:8px 0;
+  border-radius:14px;
+  line-height:1.4;
+  white-space:pre-wrap;
+}
+.user{
+  background:#2563eb;
+  margin-left:auto;
+}
+.bot{
+  background:#1e293b;
+  margin-right:auto;
+}
+#inputBox{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:#020617;
+  padding:10px;
+  border-top:1px solid #1e293b;
+}
+textarea{
+  width:100%;
+  resize:none;
+  border-radius:12px;
+  border:none;
+  padding:10px;
+  font-size:15px;
+  outline:none;
+}
+button{
+  width:100%;
+  margin-top:6px;
+  padding:10px;
+  border:none;
+  border-radius:12px;
+  background:#22c55e;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+<header>🤖 AkayGPT</header>
+
+<div id="chat"></div>
+
+<div id="inputBox">
+  <textarea id="input" rows="2" placeholder="Poe gibi sorunu yaz..."></textarea>
+  <button onclick="send()">Gönder</button>
+</div>
+
+<script>
+const HF_API_KEY = "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";
+const MODEL = "HuggingFaceH4/zephyr-7b-beta";
+
+function add(text, cls){
+  const d=document.createElement("div");
+  d.className="message "+cls;
+  d.textContent=text;
+  document.getElementById("chat").appendChild(d);
+  window.scrollTo(0,document.body.scrollHeight);
+}
+
+async function send(){
+  const input=document.getElementById("input");
+  const text=input.value.trim();
+  if(!text) return;
+  input.value="";
+
+  add(text,"user");
+  add("Yazıyor...","bot");
+
+  const botMsg=document.querySelectorAll(".bot");
+  const lastBot=botMsg[botMsg.length-1];
+
+  try{
+    const res=await fetch(
+      "https://api-inference.huggingface.co/models/"+MODEL,
+      {
+        method:"POST",
+        headers:{
+          "Authorization":"Bearer "+HF_API_KEY,
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          inputs:text,
+          options:{wait_for_model:true}
+        })
+      }
+    );
+
+    const data=await res.json();
+
+    let reply="Cevap alınamadı";
+    if(Array.isArray(data) && data[0]?.generated_text){
+      reply=data[0].generated_text.replace(text,"").trim();
+    }else if(data.error){
+      reply="Hata: "+data.error;
+    }
+
+    lastBot.textContent=reply;
+
+  }catch(e){
+    lastBot.textContent="Bağlantı hatası";
+  }
+}
+</script>
+</body>
+    </html>
